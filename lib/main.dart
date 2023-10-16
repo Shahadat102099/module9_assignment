@@ -8,73 +8,175 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Selectable List Example',
-      home: SelectableListScreen(),
+      home: TodoApp(),
     );
   }
 }
 
-class SelectableListScreen extends StatefulWidget {
+class TodoApp extends StatefulWidget {
   @override
-  _SelectableListScreenState createState() => _SelectableListScreenState();
+  _TodoAppState createState() => _TodoAppState();
 }
 
-class _SelectableListScreenState extends State<SelectableListScreen> {
-  List<bool> selectedItems = List.generate(5, (index) => false);
+class _TodoAppState extends State<TodoApp> {
+  List<Task> tasks = [];
+  TextEditingController titleController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
 
-  void toggleSelection(int index) {
+  void addTask(String title, String description) {
     setState(() {
-      selectedItems[index] = !selectedItems[index];
+      tasks.add(Task(title, description));
+      titleController.clear();
+      descriptionController.clear();
     });
   }
 
-  int getSelectedCount() {
-    return selectedItems.where((itemSelected) => itemSelected).length;
+  void editTask(int index, String title, String description) {
+    setState(() {
+      tasks[index] = Task(title, description);
+    });
+  }
+
+  void deleteTask(int index) {
+    setState(() {
+      tasks.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Selection Screen'),
-      ),
-      body: ListView.builder(
-        itemCount: selectedItems.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              toggleSelection(index);
-            },
-            child: Container(
-              padding: EdgeInsets.all(16),
-              color: selectedItems[index] ? Colors.blue : null,
-              child: Text('Item ${index + 1}'), // Start from Item 1
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: Text('Selected Items'),
-                content: Text('Number of selected items: ${getSelectedCount()}'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('OK'),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 50, 0, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            labelText: '',
+                            border: InputBorder.none,
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              titleController.clear();
+                              descriptionController.clear();
+                            });
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.search),
+                        onPressed: () {
+                          // Implement your search functionality here
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              );
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: TextFormField(
+              controller: titleController,
+              decoration: InputDecoration(
+                labelText: 'Add Title',
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: TextFormField(
+              controller: descriptionController,
+              decoration: InputDecoration(
+                labelText: 'Add Description',
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (titleController.text.isNotEmpty && descriptionController.text.isNotEmpty) {
+                addTask(titleController.text, descriptionController.text);
+              }
             },
-          );
-        },
-        child: Icon(Icons.check),
+            style: ElevatedButton.styleFrom(
+              primary: Colors.orange, // Change the button's background color to orange
+            ),
+            child: Text('Add', style: TextStyle(color: Colors.white)), // Change text color to white
+          ),
+
+          Expanded(
+            child: ListView.builder(
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
+                // Set the background color to grey for all items
+                Color itemColor = Colors.black12;
+                return Padding(
+                  padding: const EdgeInsets.all(8.0), // Add padding around each list item
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.orange,
+                    ),
+                    title: Text(tasks[index].title),
+                    subtitle: Text(tasks[index].description),
+                    tileColor: itemColor,
+                    trailing: Icon(Icons.arrow_forward), // Add this line
+                    onLongPress: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Alerts'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  editTask(index, titleController.text, descriptionController.text);
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('Edit'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  deleteTask(index);
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('Delete'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class Task {
+  String title;
+  String description;
+
+  Task(this.title, this.description);
 }
